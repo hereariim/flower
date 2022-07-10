@@ -1,10 +1,12 @@
 from functools import wraps
 import shutil
 import tempfile
-from skimage.io import imread
+from skimage.io import imread, imsave
+from skimage.filters import threshold_otsu
 from PIL import Image
 from aiohttp import web #HTTPBadRequest
 from webargs import fields, validate
+import matplotlib.pyplot as plt
 
 def _catch_error(f):
     @wraps(f)
@@ -53,11 +55,21 @@ def predict(**kwargs):
 
     filepath = kwargs["image"].filename
     originalname = kwargs["image"].original_filename
-    
+
     print("IMAGE")
-    im = Image.open(filepath)
-    im.save('demo.png')  
+    #im = Image.open(filepath)
+    #im.save('demo.png')  
+
+    data = imread(filepath)
+    print("> read")
+    Otsu_Threshold = threshold_otsu(data)
+    print("> otsu done")
+    BW_Original = data > Otsu_Threshold
+    print("> otsu applied")
+    imsave(fname="demo.png", arr=BW_Original)
+    #plt.imsave('demo.png', BW_Original, cmap = plt.cm.gray)
     print("SAVE")
+
     # Return the image directly
     if kwargs['accept'] == 'image/png':
         #img = Image.open(originalname)
