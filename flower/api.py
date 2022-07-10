@@ -1,7 +1,8 @@
 from functools import wraps
 import shutil
 import tempfile
-
+from skimage.io import imread
+from PIL import Image
 from aiohttp import web #HTTPBadRequest
 from webargs import fields, validate
 
@@ -51,10 +52,18 @@ def predict(**kwargs):
     """
 
     filepath = kwargs["image"].filename
+    originalname = kwargs["image"].original_filename
     
+    print("IMAGE")
+    im = Image.open(filepath)
+    im.save('demo.png')  
+    print("SAVE")
     # Return the image directly
     if kwargs['accept'] == 'image/png':
-        return open(filepath, 'rb')
+        #img = Image.open(originalname)
+        #return img.save("output")
+        
+        return open('demo.png','rb')
     
     # Return a zip
     elif kwargs['accept'] == 'application/zip':
@@ -62,8 +71,8 @@ def predict(**kwargs):
         zip_dir = tempfile.TemporaryDirectory()
 
         # Add original image to output zip
-        shutil.copyfile(filepath,
-                        zip_dir.name + '/demo.png')
+        shutil.copyfile('demo.png',
+                        zip_dir.name + '/image.png')
 
         # Add for example a demo txt file
         with open(f'{zip_dir.name}/demo.txt', 'w') as f:
