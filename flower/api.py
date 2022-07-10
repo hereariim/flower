@@ -5,6 +5,15 @@ import tempfile
 from aiohttp.web import HTTPBadRequest
 from webargs import files, validate
 
+def _catch_error(f):
+    @wraps(f)
+    def wrap(*args,**kwargs)
+        try:
+            return f(*args,**kwargs)
+        except Exception as e:
+            raise HTTPBadRequest(reason=e)
+    return wrap
+
 def get_metadata():
     metadata = {
         "author":"xxx",
