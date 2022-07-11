@@ -1,8 +1,16 @@
 from functools import wraps
 import shutil
 import tempfile
-from skimage.io import imread, imsave
-from skimage.filters import threshold_otsu
+
+from skimage.io import imread, imsave, imread_collection, concatenate_images
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+from focal_loss import BinaryFocalLoss
+from tensorflow.keras import backend as K
+import numpy as np
+from skimage.transform import resize
+
 from PIL import Image
 from aiohttp import web #HTTPBadRequest
 from webargs import fields, validate
@@ -57,16 +65,34 @@ def predict(**kwargs):
     originalname = kwargs["image"].original_filename
 
     print("IMAGE")
-    #im = Image.open(filepath)
-    #im.save('demo.png')  
 
-    data = imread(filepath)
-    print("> read")
-    Otsu_Threshold = threshold_otsu(data)
-    print("> otsu done")
-    BW_Original = data > Otsu_Threshold
-    print("> otsu applied")
-    imsave(fname="demo.png", arr=BW_Original)
+    def redimension(image):
+        X = np.zeors((1,256,256,3),dtype=np.uint8)
+        img = imread(image)
+        size_ = img.shape
+        X[0] = resize(img, (256,256), mode="constant", preserve_range=True)
+        return X,size_
+
+    def dice_coefficient(y_true,y_pred):
+        eps = 1e-6
+        y_true_f = K.flatten(y_true)
+        y_pred_f = K.flatten(y_pred)
+        intersection =K.sum(y_true_f*y_pred_f)
+        return (2. * intersection) / (K.sum(y_true_f * y_true_f) + K.sum(y_pred_f * y_pred_f) + eps)
+
+    #data = imread(filepath)
+    image_reshaped , size_ = redimension(filepath)
+    print("> redimension")
+    x,y,z = size_
+    model_new = tf.keras.models.load_model("best_model_FL_BCE_0_5.h5",custom_objects={"dice_coefficient" : dice_coefficient})
+    print("> model imported")
+    prediction = model_new.predict(image_reshaped)
+    print("> model predict")
+    preds_test_t = (prediction > 0.2)
+    print("> threshold optimization")
+    preds_test_t = resize(preds_test_t[0,:,:,0], (x,y), mode = "constant", preserve_range = True)
+    print("> resize done")
+    imsave(fname="demo.png", arr=np.squeeze(preds_test_t))
     #plt.imsave('demo.png', BW_Original, cmap = plt.cm.gray)
     print("SAVE")
 
