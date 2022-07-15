@@ -1,6 +1,7 @@
 from functools import wraps
 import shutil
 import tempfile
+from marshmallow import missing
 
 from skimage.io import imread, imsave, imread_collection, concatenate_images
 import numpy as np
@@ -15,6 +16,8 @@ from PIL import Image
 from aiohttp import web #HTTPBadRequest
 from webargs import fields, validate
 import matplotlib.pyplot as plt
+
+import flower.config as cfg
 
 def _catch_error(f):
     @wraps(f)
@@ -33,9 +36,68 @@ def get_metadata():
     }
     return metadata
 
+def get_train_args():
+    """
+    Input fileds for the user (training)
+    """
+    arg_dict = {
+        "learning rate" : fields.Str(
+            required=False,
+            missing="None",
+            description="Learning rate",
+        ),
+        "loss function" : fields.Str(
+            missing=False,
+            enum = ["Weighted BCE","Focal loss"],
+            description = "Choose your loss function",
+            required=False,
+        ),
+        "image augmentation" : fields.Str(
+            missing=False,
+            enum = ["Yes","No"],
+            description = "Applying image augmentation",
+            required=False,
+        ),
+        "batch size" : fields.Str(
+            required=False,
+            missing="None",
+            description="Batch size",
+        ),
+        "filters" : fields.Str(
+            required=False,
+            missing="None",
+            description="N filters",
+        ),
+        "accept": fields.Str(
+            description="Media type(s) that is/are acceptable for the response.",
+            missing='application/zip',
+            validate=validate.OneOf(['application/zip', 'image/png', 'application/json']),
+        ),
+    }
+    return arg_dict
+
+@_catch_error
+def train(**kwargs):
+    """
+    OUTPUT
+    """
+
+    results = {
+        "status" : "ok",
+        "train_args" : {},
+        "training" : {},
+    }
+
+    results["train_args"] = kwargs # input utilisateur
+
+    # import model weight
+
+    return results
+
+
 def get_predict_args():
     """
-    Input fields for the user.
+    Input fields for the user (inference)
     """
     arg_dict = {
         "image": fields.Field(
@@ -64,10 +126,12 @@ def predict(**kwargs):
     filepath = kwargs["image"].filename
     originalname = kwargs["image"].original_filename
 
+    print(kwargs["image"])
+
     print("IMAGE")
 
     def redimension(image):
-        X = np.zeors((1,256,256,3),dtype=np.uint8)
+        X = np.zeros((1,256,256,3),dtype=np.uint8)
         img = imread(image)
         size_ = img.shape
         X[0] = resize(img, (256,256), mode="constant", preserve_range=True)
