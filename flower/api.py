@@ -85,17 +85,17 @@ def get_train_args():
         "filtre": fields.Str(
             required = False,
             missing=3,
-            description="learning rate",
+            description="filtre",
         ),
         "gamma": fields.Str(
             required = False,
             missing=0.2,
-            description="learning rate",
+            description="gamma",
         ),
         "batch_size": fields.Str(
             required = False,
             missing=2,
-            description="learning rate",
+            description="batch_size",
         ),
     }
     return arg_dict
