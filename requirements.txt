@@ -16,7 +16,7 @@ tensorflow
 focal_loss
 scikit_image
 
-h5py==2.10
+h5py
 segmentation_models
 imshowpair
 albumentations
