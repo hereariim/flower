@@ -20,4 +20,3 @@ h5py
 segmentation_models
 imshowpair
 albumentations
-tqdm
