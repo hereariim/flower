@@ -3,7 +3,7 @@ import shutil
 import tempfile
 from marshmallow import missing
 import yaml
-from tqdm import tqdm
+# from tqdm import tqdm
 from zipfile import ZipFile
 from skimage.io import imread, imsave, imread_collection, concatenate_images
 import numpy as np
@@ -110,7 +110,8 @@ def train(**args):
     def fabriquer_train(path):
         dico = {}
         A = os.listdir(path)      
-        for i in tqdm(range(len(A)),'train'):
+        # for i in tqdm(range(len(A)),'train'):
+        for i in range(len(A)):
             img = imread(os.path.join(path,A[i]))
             dico[A[i]]=np.array(img)
         return dico
@@ -119,7 +120,8 @@ def train(**args):
         dico = {}
         A = os.listdir(path)
         
-        for i in tqdm(range(len(A)),'test'):
+        # for i in tqdm(range(len(A)),'test'):
+        for i in range(len(A)):
             img = imread(os.path.join(path,A[i]))
             dico[A[i]]=np.array(img)
         return dico
@@ -146,7 +148,8 @@ def train(**args):
     def get_X_data(ids):
         ids.sort()
         X = np.zeros((len(ids), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
-        for n, id_ in tqdm(enumerate(ids), total=len(ids)):
+        # for n, id_ in tqdm(enumerate(ids), total=len(ids)):
+        for n, id_ in enumerate(ids):
             # we'll be using skimage library for reading file
             img = image_[id_][:,:,:IMG_CHANNELS]
             img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
@@ -157,7 +160,8 @@ def train(**args):
         ids.sort()
         Y = np.zeros((len(ids), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool)
         
-        for n, id_ in tqdm(enumerate(ids), total=len(ids)):
+        # for n, id_ in tqdm(enumerate(ids), total=len(ids)):
+        for n, id_ in enumerate(ids):
             mask = np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool)
             masque_ = masks_[id_]
             gray_file = rgb2gray(masque_)
@@ -296,7 +300,8 @@ def train(**args):
     prob_thresh = [i*10**-1 for i in range(1,10)]
     perf=[] # define an empty array to store the computed F1-score for each threshold
     perf_ALL=[]
-    for r in tqdm(prob_thresh): # all th thrshold values
+    # for r in tqdm(prob_thresh): # all th thrshold values
+    for r in prob_thresh:
         preds_bin = ((Mask_valid_pred_int> r) + 0 )
         preds_bin1=preds_bin[:,:,:,0]
         GTALL=y_val[:,:,:,0]
@@ -347,7 +352,8 @@ def train(**args):
     prob_thresh = [i*10**-1 for i in range(1,10)]
     perf=[] # define an empty array to store the computed F1-score for each threshold
     perf_ALL=[]
-    for r in tqdm(prob_thresh): # all th thrshold values
+    # for r in tqdm(prob_thresh): # all th thrshold values
+    for r in prob_thresh:
         preds_bin = ((Mask_valid_pred_int> r) + 0 )
         preds_bin1=preds_bin[:,:,:,0]
         GTALL=y_val[:,:,:,0]
