@@ -2,7 +2,7 @@ from functools import wraps
 import shutil
 import tempfile
 from marshmallow import missing
-
+import yaml
 from tqdm import tqdm
 from zipfile import ZipFile
 from skimage.io import imread, imsave, imread_collection, concatenate_images
@@ -20,7 +20,7 @@ from webargs import fields, validate
 import matplotlib.pyplot as plt
 from sklearn.metrics import f1_score
 import flower.config as cfg
-
+from keras import backend
 import os
 import sys
 import random
@@ -103,7 +103,7 @@ def get_train_args():
 def train(**args):
     output={}
     output["hyperparameter"]=args
-
+    backend.clear_session()
     path_image_data = cfg.DATA_IMAGE
     path_masks_data = cfg.DATA_MASK
 
@@ -254,10 +254,10 @@ def train(**args):
         intersection = K.sum(y_true_f * y_pred_f)
         return (2. * intersection) / (K.sum(y_true_f * y_true_f) + K.sum(y_pred_f * y_pred_f) + eps) #eps pour éviter la division par 0 
 
-    n_filters_user = args["filtre"]
-    learning_rate_user = args["learning_rate"]
-    gamma_user = args["gamma"]
-    batch_size_user = args["batch_size"]
+    n_filters_user = yaml.safe_load(args["filtre"])
+    learning_rate_user = yaml.safe_load(args["learning_rate"])
+    gamma_user = yaml.safe_load(args["gamma"])
+    batch_size_user = yaml.safe_load(args["batch_size"])
 
     input_img = Input((256,256, 3), name='img')
     model = get_unet(input_img, n_filters=n_filters_user, kernel_size=3) #nombre de filtre
@@ -424,8 +424,6 @@ def predict(**kwargs):
     filepath = kwargs["image"].filename
     originalname = kwargs["image"].original_filename
 
-    print("IMAGE")
-
     def redimension(image):
         X = np.zeros((1,256,256,3),dtype=np.uint8)
         img = imread(image)
@@ -444,6 +442,7 @@ def predict(**kwargs):
 
         image_reshaped, size_ = redimension(filepath)
         x,y,z = size_
+        print("IMAGE")
         model_new = tf.keras.models.load_model("best_model_FL_BCE_0_5_model.h5",custom_objects={"dice_coefficient" : dice_coefficient})
         
         prediction = model_new.predict(image_reshaped)
